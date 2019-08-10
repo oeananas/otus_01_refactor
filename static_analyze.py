@@ -93,6 +93,7 @@ def get_function_names(path):
 
 
 def get_top_verbs_in_path(path, top_size=10):
+    """ return top of all verbs in path, top 10 by default """
     all_words = get_all_words_in_path(path)
     verbs = flat([get_verbs_from_name(word) for word in all_words])
     return collections.Counter(verbs).most_common(top_size)
