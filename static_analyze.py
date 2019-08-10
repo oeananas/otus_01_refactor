@@ -62,9 +62,9 @@ def get_all_names(tree):
     return [node.id for node in ast.walk(tree) if isinstance(node, ast.Name)]
 
 
-def get_verbs_from_function_name(function_name):
+def get_verbs_from_name(name):
     """ return verbs from name of function """
-    return [word for word in split_snake_case_name_to_words(function_name) if is_verb(word)]
+    return [word for word in split_snake_case_name_to_words(name) if is_verb(word)]
 
 
 def split_snake_case_name_to_words(name):
@@ -92,10 +92,16 @@ def get_function_names(path):
     return exclude_magic_function_names(all_f_names)
 
 
+def get_top_verbs_in_path(path, top_size=10):
+    all_words = get_all_words_in_path(path)
+    verbs = flat([get_verbs_from_name(word) for word in all_words])
+    return collections.Counter(verbs).most_common(top_size)
+
+
 def get_top_function_verbs_in_path(path, top_size=10):
     """ return most common words, top 10 by default """
     functions = get_function_names(path)
-    verbs = flat([get_verbs_from_function_name(function_name) for function_name in functions])
+    verbs = flat([get_verbs_from_name(function_name) for function_name in functions])
     return collections.Counter(verbs).most_common(top_size)
 
 
