@@ -10,11 +10,11 @@ def flat(_list):
     return sum([list(item) for item in _list], [])
 
 
-def is_verb(_word):
+def is_verb(word):
     """ return True if word is verbose"""
-    if not _word:
+    if not word:
         return False
-    pos_info = pos_tag([_word])
+    pos_info = pos_tag([word])
     return pos_info[0][1] == 'VB'
 
 
@@ -25,10 +25,10 @@ def get_content_from_file(filename):
     return main_file_content
 
 
-def get_py_filenames(_path):
+def get_py_filenames(dir_path):
     """ return filenames endswith .py """
     filenames = []
-    for dirname, dirs, files in os.walk(_path, topdown=True):
+    for dirname, dirs, files in os.walk(dir_path, topdown=True):
         files = [file for file in files if file.endswith('.py')]
         for file in files:
             filenames.append(os.path.join(dirname, file))
@@ -37,11 +37,10 @@ def get_py_filenames(_path):
     return filenames
 
 
-def get_trees(_path, with_filenames=False, with_file_content=False):
+def get_trees(path, with_filenames=False, with_file_content=False):
     """ return list of trees from path """
     trees = []
-    filenames = get_py_filenames(_path)
-    print('filenames', filenames)
+    filenames = get_py_filenames(path)
     for filename in filenames:
         main_file_content = get_content_from_file(filename)
         try:
@@ -65,7 +64,7 @@ def get_all_names(tree):
 
 def get_verbs_from_function_name(function_name):
     """ return verbs from name of function """
-    return [_word for _word in function_name.split('_') if is_verb(_word)]
+    return [word for word in split_snake_case_name_to_words(function_name) if is_verb(word)]
 
 
 def split_snake_case_name_to_words(name):
@@ -73,33 +72,37 @@ def split_snake_case_name_to_words(name):
     return name.split('_')
 
 
-def get_all_words_in_path(_path):
+def exclude_magic_function_names(func_names_list):
+    """ return func names without __name__ """
+    return [f for f in func_names_list if not (f.startswith('__') and f.endswith('__'))]
+
+
+def get_all_words_in_path(path):
     """ return list of split verbs from path """
-    trees = get_trees(_path)
-    function_names = [f for f in flat([get_all_names(t) for t in trees]) if not (f.startswith('__') and f.endswith('__'))]
-    return flat([split_snake_case_name_to_words(function_name) for function_name in function_names])
+    trees = get_trees(path)
+    all_words = [f for f in flat([get_all_names(t) for t in trees])]
+    words = exclude_magic_function_names(all_words)
+    return flat([split_snake_case_name_to_words(word) for word in words])
 
 
-def get_def_function_names(_path):
+def get_function_names(path):
     """ return define functions """
-    trees = get_trees(_path)
-    return flat([[node.name.lower() for node in ast.walk(t) if isinstance(node, ast.FunctionDef)] for t in trees])
+    trees = get_trees(path)
+    all_f_names = flat([[node.name.lower() for node in ast.walk(t) if isinstance(node, ast.FunctionDef)] for t in trees])
+    return exclude_magic_function_names(all_f_names)
 
 
-def get_top_verbs_in_path(_path, _top_size=10):
+def get_top_function_verbs_in_path(path, top_size=10):
     """ return most common words, top 10 by default """
-    nodes = get_def_function_names(_path)
-    functions = [f for f in nodes if not (f.startswith('__') and f.endswith('__'))]
-    print('808098', functions)
+    functions = get_function_names(path)
     verbs = flat([get_verbs_from_function_name(function_name) for function_name in functions])
-    return collections.Counter(verbs).most_common(_top_size)
+    return collections.Counter(verbs).most_common(top_size)
 
 
-def get_top_functions_names_in_path(_path, _top_size=10):
+def get_top_functions_names_in_path(path, top_size=10):
     """ return most common names of functions, top 10 by default """
-    nodes = get_def_function_names(_path)
-    nms = [f for f in nodes if not (f.startswith('__') and f.endswith('__'))]
-    return collections.Counter(nms).most_common(_top_size)
+    functions = get_function_names(path)
+    return collections.Counter(functions).most_common(top_size)
 
 
 if __name__ == '__main__':

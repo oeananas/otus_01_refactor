@@ -6,5 +6,5 @@ Most Common
 
 ```bash
 pip3 install -r requirements.txt
-python3 01_refactor.py
+python3 static_analize.py
 ```
